@@ -1,4 +1,2 @@
-@npm install
-@npm install grunt --save-dev
-@node grunt screeps
+@grunt screeps
 @pause
