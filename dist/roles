@@ -1,0 +1,156 @@
+/*
+ * Module code goes here. Use 'module.exports' to export things:
+ * module.exports = 'a thing';
+ *
+ * You can import it from another modules like this:
+ * var mod = require('roles'); // -> 'a thing'
+**/
+
+
+var utility = require('utility');
+
+var _createCreep = function(_sp, body, _role, name){
+    if(!arguments[1]) name = null;
+    
+    if(_sp.canCreateCreep(body) != OK){
+        console.log("Cannot create creep["+_role+"] right now !!!");
+        return;
+    }
+    
+    console.log(
+        "Spawn a "+_role+": " + 
+        _sp.createCreep(
+            body,
+            name,
+            { role : _role}
+            )
+        );
+}
+
+module.exports = {
+    worker : {
+        spawn : function(sp,name){
+            if(!arguments[1]) name = null;
+            var body = [WORK, WORK, CARRY, MOVE]
+            var role = "worker"
+            _createCreep(sp, body, role, name);
+        },
+        action : function(cp){
+            console.log("Creep["+cp.name+"]["+cp.memory.role+"] doing:");
+            if(cp.carry.energy < cp.carryCapacity) {
+                var sources = cp.room.find(FIND_SOURCES);
+                if(sources.length<=0)return;
+                console.log("Moving and harvesting ...");
+                if(!cp.memory.sourceId){
+                    cp.memory.sourceId = sources[Math.ceil(Math.random() * sources.length - 1)].id;
+                }
+                var source = Game.getObjectById(cp.memory.sourceId);
+                cp.moveTo(source);
+                cp.harvest(source);
+                if(cp.memory.transferId) cp.memory.transferId = null;
+            }
+            else {
+                console.log("transfering energy ...");
+                
+                if(!cp.memory.transferId){
+                    do{
+                        var spawns = cp.room.find(FIND_MY_SPAWNS);
+                        for(var i in spawns){
+                            if (spawns[i].energy < spawns[i].energyCapacity ){
+                                cp.memory.transferId = spawns[i].id;
+                                break;
+                            }
+                        }
+                        if(cp.memory.transferId != null) break;
+                        
+                        var targets = cp.room.find(FIND_MY_STRUCTURES, {
+                            filter: function(object) {
+                                return (
+                                    object.structureType == STRUCTURE_EXTENSION
+                                    || object.structureType == STRUCTURE_STORAGE
+                                    || object.structureType == STRUCTURE_LINK
+                                );
+                            }
+                        });
+                        
+                        for(var i in targets){
+                            var energy = 0
+                            if(targets[i].store){
+                                energy = targets[i].store.energy;
+                            }else{
+                                energy = targets[i].energy;
+                            }
+                            var energyCapacity = targets[i].targets;
+                            if (energy < energyCapacity ){
+                                cp.memory.transferId = targets[i].id;
+                                break;
+                            }
+                        }
+                        
+                    }while(0);
+                }
+                
+                var transfer = Game.getObjectById(cp.memory.transferId);
+                cp.moveTo(transfer);
+                cp.transferEnergy(transfer);
+                if(cp.memory.sourceId) cp.memory.sourceId = null;
+            }
+            if(cp.ticksToLive <= 0){
+                cp.memory.role = null;
+            }
+        },
+    },
+    builder : {
+        spawn : function(sp,name){
+            if(!arguments[1]) name = null;
+            var body = [WORK, WORK, CARRY, MOVE]
+            var role = "builder"
+            _createCreep(sp, body, role, name);
+        },
+        action : function(cp){
+            console.log("Creep["+cp.name+"]["+cp.memory.role+"] doing:");
+            if(cp.carry.energy == 0) {
+                console.log("Transfering energy ...");
+                cp.moveTo(Game.spawns.Spawn1);
+                Game.spawns.Spawn1.transferEnergy(cp);
+            }
+            else {
+                var targets = cp.room.find(FIND_CONSTRUCTION_SITES);
+                if(targets.length) {
+                    console.log("Building ...");
+                    cp.moveTo(targets[0]);
+                    cp.build(targets[0]);
+                }else{
+                    //升级控制器
+                    if(cp.room.controller) {
+                        console.log("Upgrading controller ...");
+                        cp.moveTo(cp.room.controller);
+                        cp.upgradeController(cp.room.controller);
+                    }
+                }
+            }
+        },
+    },
+    guarder : {
+        spawn : function(sp,name){
+            if(!arguments[1]) name = null;
+            var body = [ATTACK, MOVE]
+            var role = "guarder"
+            _createCreep(sp, body, role, name);
+        },
+        action : function(cp){
+            console.log("Creep["+cp.name+"]["+cp.memory.role+"] doing:");
+            var targets = cp.room.find(FIND_HOSTILE_CREEPS);
+            if(targets.length) {
+                console.log("Moving and guearding ...");
+                cp.moveTo(targets[0]);
+                cp.attack(targets[0]);
+            }
+        },
+    },
+};
+
+
+
+
+

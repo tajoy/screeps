@@ -1,0 +1,29 @@
+
+console.log("====================== BEGIN TICK: "+Game.time+" ======================");
+
+
+//载入模块
+var roles = require('roles');
+
+//载入prototype
+require('prototypes')();
+
+//保持creep各角色的数量
+require('role_keep')([
+    //排列在前面的先诞生
+    ["worker"  , 6 ],
+    ["builder" , 2 ],
+    ["guarder" , 1 ],
+]);
+
+
+for(var name in Game.creeps) {
+    var creep = Game.creeps[name];
+    
+    //每个角色执行相应的动作
+    roles[creep.memory.role].action(creep);
+}
+
+
+console.log("====================== END TICK: "+Game.time+" ======================");
+console.log();
