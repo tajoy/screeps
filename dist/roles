@@ -35,7 +35,7 @@ var _allocSource = function(cp){
     return null;
 }
 
-var _transferEnergy(cp){
+var _transferEnergy = function(cp){
     var rm = cp.room;
     var pos = cp.pos;
 
