@@ -39,8 +39,6 @@ var _transferEnergy = function(cp){
     var rm = cp.room;
     var pos = cp.pos;
 
-    if(src == null) return;
-
     var targets = rm.find(FIND_MY_STRUCTURES, {
         filter: function(object) {
             return (
