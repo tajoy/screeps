@@ -1,2 +1,2 @@
 # screeps
-this js code on the game of screeps.com
+this my code on the game of screeps.com
