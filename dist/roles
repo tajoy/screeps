@@ -182,9 +182,9 @@ module.exports = {
             _createCreep(sp, body, role, name);
         },
         action : function(cp){
-            if(Memory.status.creeps.count[cp.room]["worker"]
-                == Memory.config.creeps_limits[0][1]) return;
             if(cp.carry.energy == 0) {
+                if(Memory.status.creeps.count[cp.room]["worker"]
+                    == Memory.config.creeps_limits[0][1]) return;
                 var sps = rm.find(FIND_MY_SPAWNS);
                 if( sps.length <=0 ) return;
                 cp.say("get energy ...");
