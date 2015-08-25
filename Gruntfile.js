@@ -20,7 +20,7 @@ module.exports = function(grunt) {
                 branch: 'default'
             },
             dist: {
-                src: ['dist/*.js']
+                src: ['dist/*']
             }
         }
     });
