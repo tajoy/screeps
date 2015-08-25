@@ -9,6 +9,31 @@
 
 var utility = require('utility');
 
+
+var _getEnergy = function(stct){
+    if (stct.structureType == STRUCTURE_EXTENSION
+        || stct.structureType == STRUCTURE_SPAWN
+        || stct.structureType == STRUCTURE_LINK) {
+        return stct.energy;
+    }
+    if (stct.structureType == STRUCTURE_STORAGE) {
+        return stct.store.energy;
+    }
+    return -1;
+}
+
+var _getCapacity = function(stct){
+    if (stct.structureType == STRUCTURE_EXTENSION
+        || stct.structureType == STRUCTURE_SPAWN
+        || stct.structureType == STRUCTURE_LINK) {
+        return stct.energyCapacity;
+    }
+    if (stct.structureType == STRUCTURE_STORAGE) {
+        return stct.storeCapacity;
+    }
+    return -1;
+}
+
 var _createCreep = function(_sp, body, _role, name){
     if(!arguments[1]) name = null;
     
@@ -24,6 +49,7 @@ var _createCreep = function(_sp, body, _role, name){
     console.log("Spawn a "+_role+": " + cp);
     return cp;
 }
+
 var _allocSource = function(cp){
     var sources = cp.room.find(FIND_SOURCES);
     var num = sources.length;
@@ -67,6 +93,14 @@ var _transferEnergy = function(cp){
 
     for (var i = 0; i < targets.length; i++) {
         var target = targets[i];
+
+        if (target.structureType == STRUCTURE_SPAWN
+            && target.energy <= target.storeCapacity) {
+            cp.memory.transferId = target.id;
+            cp.memory.transferPath = target.path;
+            return;
+        }
+        
         if (target.structureType == STRUCTURE_EXTENSION
             && target.energy <= target.energyCapacity) {
             cp.memory.transferId = target.id;
@@ -76,13 +110,6 @@ var _transferEnergy = function(cp){
 
         if (target.structureType == STRUCTURE_STORAGE
             && target.store.energy <= target.energyCapacity) {
-            cp.memory.transferId = target.id;
-            cp.memory.transferPath = target.path;
-            return;
-        }
-
-        if (target.structureType == STRUCTURE_SPAWN
-            && target.energy <= target.storeCapacity) {
             cp.memory.transferId = target.id;
             cp.memory.transferPath = target.path;
             return;
@@ -99,30 +126,6 @@ var _transferEnergy = function(cp){
         }
 
     }
-}
-
-var _getEnergy = function(stct){
-    if (stct.structureType == STRUCTURE_EXTENSION
-        || stct.structureType == STRUCTURE_SPAWN
-        || stct.structureType == STRUCTURE_LINK) {
-        return stct.energy;
-    }
-    if (stct.structureType == STRUCTURE_STORAGE) {
-        return stct.store.energy;
-    }
-    return -1;
-}
-
-var _getCapacity = function(stct){
-    if (stct.structureType == STRUCTURE_EXTENSION
-        || stct.structureType == STRUCTURE_SPAWN
-        || stct.structureType == STRUCTURE_LINK) {
-        return stct.energyCapacity;
-    }
-    if (stct.structureType == STRUCTURE_STORAGE) {
-        return stct.storeCapacity;
-    }
-    return -1;
 }
 
 
