@@ -26,9 +26,9 @@ var _createCreep = function(_sp, body, _role, name){
 }
 var _allocSource = function(cp){
     var sources = cp.room.find(FIND_SOURCES);
-    var num = len(sources);
+    var num = sources.length;
     if(num > 0){
-        var idx = parseInt("0x"+substr(cp.id, 0, 2));
+        var idx = parseInt("0x"+cp.id.substr(0, 2));
         cp.memory.sourceId = sources[idx%num].id;
         return cp.memory.sourceId;
     }
@@ -48,7 +48,12 @@ var _transferEnergy = function(cp){
             );
         }
     });
-    targets.concat(rm.find(FIND_MY_SPAWNS));
+    var sps = rm.find(FIND_MY_SPAWNS);
+    if(utility.isArray(sps)){
+        targets = targets.concat(sps);
+    }else{
+        targets.push(sps);
+    }
     var path = [];
 
     //计算所有路径
@@ -63,21 +68,21 @@ var _transferEnergy = function(cp){
     for (var i = 0; i < targets.length; i++) {
         var target = targets[i];
         if (target.structureType == STRUCTURE_EXTENSION
-            && target.energy - cp.carry <= target.energyCapacity) {
+            && target.energy <= target.energyCapacity) {
             cp.memory.transferId = target.id;
             cp.memory.transferPath = target.path;
             return;
         }
 
         if (target.structureType == STRUCTURE_STORAGE
-            && target.store.energy - cp.carry <= target.energyCapacity) {
+            && target.store.energy <= target.energyCapacity) {
             cp.memory.transferId = target.id;
             cp.memory.transferPath = target.path;
             return;
         }
 
         if (target.structureType == STRUCTURE_SPAWN
-            && target.energy - cp.carry <= target.storeCapacity) {
+            && target.energy <= target.storeCapacity) {
             cp.memory.transferId = target.id;
             cp.memory.transferPath = target.path;
             return;
@@ -87,7 +92,7 @@ var _transferEnergy = function(cp){
         // until the next transfer is possible.
         if (target.structureType == STRUCTURE_LINK
             && target.cooldown <= 0 
-            && target.energy - cp.carry <= target.energyCapacity) {
+            && target.energy <= target.energyCapacity) {
             cp.memory.transferId = target.id;
             cp.memory.transferPath = target.path;
             return;
@@ -135,11 +140,10 @@ module.exports = {
             }
         },
         action : function(cp){
-            console.log("Creep["+cp.name+"]["+cp.memory.role+"] doing:");
             if(cp.carry.energy < cp.carryCapacity) {
                 var sources = cp.room.find(FIND_SOURCES);
                 if(sources.length<=0)return;
-                console.log("Moving and harvesting ...");
+                cp.say("mining..");
                 if(!cp.memory.sourceId){
                     _allocSource(cp);
                 }
@@ -147,9 +151,8 @@ module.exports = {
                 cp.moveTo(source);
                 cp.harvest(source);
                 if(cp.memory.transferId) cp.memory.transferId = null;
-            }
-            if(cp.carry.energy == 0) {
-                console.log("transfering energy ...");
+            } else {
+                cp.say("returning ...");
                 if(!cp.memory.transferId){
                     _transferEnergy(cp);
                 }
@@ -176,22 +179,21 @@ module.exports = {
             _createCreep(sp, body, role, name);
         },
         action : function(cp){
-            console.log("Creep["+cp.name+"]["+cp.memory.role+"] doing:");
             if(cp.carry.energy == 0) {
-                console.log("Transfering energy ...");
+                cp.say("get energy ...");
                 cp.moveTo(Game.spawns.Spawn1);
                 Game.spawns.Spawn1.transferEnergy(cp);
             }
             else {
                 var targets = cp.room.find(FIND_CONSTRUCTION_SITES);
                 if(targets.length) {
-                    console.log("Building ...");
+                    cp.say("Building ...");
                     cp.moveTo(targets[0]);
                     cp.build(targets[0]);
                 }else{
                     //升级控制器
                     if(cp.room.controller) {
-                        console.log("Upgrading controller ...");
+                        cp.say("Upgrading controller ...");
                         cp.moveTo(cp.room.controller);
                         cp.upgradeController(cp.room.controller);
                     }
@@ -207,10 +209,9 @@ module.exports = {
             _createCreep(sp, body, role, name);
         },
         action : function(cp){
-            console.log("Creep["+cp.name+"]["+cp.memory.role+"] doing:");
             var targets = cp.room.find(FIND_HOSTILE_CREEPS);
             if(targets.length) {
-                console.log("Moving and guearding ...");
+                cp.say("defending ...");
                 cp.moveTo(targets[0]);
                 cp.attack(targets[0]);
             }
