@@ -100,7 +100,7 @@ var _transferEnergy = function(cp){
             cp.memory.transferPath = target.path;
             return;
         }
-        
+
         if (target.structureType == STRUCTURE_EXTENSION
             && target.energy <= target.energyCapacity) {
             cp.memory.transferId = target.id;
@@ -182,10 +182,14 @@ module.exports = {
             _createCreep(sp, body, role, name);
         },
         action : function(cp){
+            if(Memory.status.creeps.count[cp.room]["worker"]
+                == Memory.config.creeps_limits[0][1]) return;
             if(cp.carry.energy == 0) {
+                var sps = rm.find(FIND_MY_SPAWNS);
+                if( sps.length <=0 ) return;
                 cp.say("get energy ...");
-                cp.moveTo(Game.spawns.Spawn1);
-                Game.spawns.Spawn1.transferEnergy(cp);
+                cp.moveTo(sps[0]);
+                sps[0].transferEnergy(cp);
             }
             else {
                 var targets = cp.room.find(FIND_CONSTRUCTION_SITES);
