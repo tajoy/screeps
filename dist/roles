@@ -14,18 +14,116 @@ var _createCreep = function(_sp, body, _role, name){
     
     if(_sp.canCreateCreep(body) != OK){
         console.log("Cannot create creep["+_role+"] right now !!!");
-        return;
+        return null;
     }
-    
-    console.log(
-        "Spawn a "+_role+": " + 
-        _sp.createCreep(
-            body,
-            name,
-            { role : _role}
-            )
-        );
+    var cp =_sp.createCreep(
+                body,
+                name,
+                { role : _role}
+            );
+    console.log("Spawn a "+_role+": " + cp);
+    return cp;
 }
+var _allocSource = function(cp){
+    var sources = cp.room.find(FIND_SOURCES);
+    var num = len(sources);
+    if(num > 0){
+        var idx = parseInt("0x"+substr(cp.id, 0, 2));
+        cp.memory.sourceId = sources[idx%num].id;
+        return cp.memory.sourceId;
+    }
+    return null;
+}
+
+var _transferEnergy(cp){
+    var rm = cp.room;
+    var pos = cp.pos;
+
+    if(src == null) return;
+
+    var targets = rm.find(FIND_MY_STRUCTURES, {
+        filter: function(object) {
+            return (
+                object.structureType == STRUCTURE_EXTENSION
+                || object.structureType == STRUCTURE_STORAGE
+                || object.structureType == STRUCTURE_LINK
+            );
+        }
+    });
+    targets.concat(rm.find(FIND_MY_SPAWNS));
+    var path = [];
+
+    //计算所有路径
+    for (var i in targets) {
+        targets[i].path = cp.pos.findPathTo(targets[i]);
+    }
+    //按距离升序排序
+    targets.sort(function(a,b){
+        return a.path.length > b.path.length ? 1 : -1;
+    });
+
+    for (var i = 0; i < targets.length; i++) {
+        var target = targets[i];
+        if (target.structureType == STRUCTURE_EXTENSION
+            && target.energy - cp.carry <= target.energyCapacity) {
+            cp.memory.transferId = target.id;
+            cp.memory.transferPath = target.path;
+            return;
+        }
+
+        if (target.structureType == STRUCTURE_STORAGE
+            && target.store.energy - cp.carry <= target.energyCapacity) {
+            cp.memory.transferId = target.id;
+            cp.memory.transferPath = target.path;
+            return;
+        }
+
+        if (target.structureType == STRUCTURE_SPAWN
+            && target.energy - cp.carry <= target.storeCapacity) {
+            cp.memory.transferId = target.id;
+            cp.memory.transferPath = target.path;
+            return;
+        }
+
+        //cooldown(number): The amount of game ticks the link has to wait
+        // until the next transfer is possible.
+        if (target.structureType == STRUCTURE_LINK
+            && target.cooldown <= 0 
+            && target.energy - cp.carry <= target.energyCapacity) {
+            cp.memory.transferId = target.id;
+            cp.memory.transferPath = target.path;
+            return;
+        }
+
+    }
+}
+
+var _getEnergy = function(stct){
+    if (stct.structureType == STRUCTURE_EXTENSION
+        || stct.structureType == STRUCTURE_SPAWN
+        || stct.structureType == STRUCTURE_LINK) {
+        return stct.energy;
+    }
+    if (stct.structureType == STRUCTURE_STORAGE) {
+        return stct.store.energy;
+    }
+    return -1;
+}
+
+var _getCapacity = function(stct){
+    if (stct.structureType == STRUCTURE_EXTENSION
+        || stct.structureType == STRUCTURE_SPAWN
+        || stct.structureType == STRUCTURE_LINK) {
+        return stct.energyCapacity;
+    }
+    if (stct.structureType == STRUCTURE_STORAGE) {
+        return stct.storeCapacity;
+    }
+    return -1;
+}
+
+
+
 
 module.exports = {
     worker : {
@@ -33,7 +131,10 @@ module.exports = {
             if(!arguments[1]) name = null;
             var body = [WORK, WORK, CARRY, MOVE]
             var role = "worker"
-            _createCreep(sp, body, role, name);
+            var cp =_createCreep(sp, body, role, name);
+            if(utility.isString(cp)){
+                _allocSource(cp);
+            }
         },
         action : function(cp){
             console.log("Creep["+cp.name+"]["+cp.memory.role+"] doing:");
@@ -42,61 +143,30 @@ module.exports = {
                 if(sources.length<=0)return;
                 console.log("Moving and harvesting ...");
                 if(!cp.memory.sourceId){
-                    cp.memory.sourceId = sources[Math.ceil(Math.random() * sources.length - 1)].id;
+                    _allocSource(cp);
                 }
                 var source = Game.getObjectById(cp.memory.sourceId);
                 cp.moveTo(source);
                 cp.harvest(source);
                 if(cp.memory.transferId) cp.memory.transferId = null;
             }
-            else {
+            if(cp.carry.energy == 0) {
                 console.log("transfering energy ...");
-                
                 if(!cp.memory.transferId){
-                    do{
-                        var spawns = cp.room.find(FIND_MY_SPAWNS);
-                        for(var i in spawns){
-                            if (spawns[i].energy < spawns[i].energyCapacity ){
-                                cp.memory.transferId = spawns[i].id;
-                                break;
-                            }
-                        }
-                        if(cp.memory.transferId != null) break;
-                        
-                        var targets = cp.room.find(FIND_MY_STRUCTURES, {
-                            filter: function(object) {
-                                return (
-                                    object.structureType == STRUCTURE_EXTENSION
-                                    || object.structureType == STRUCTURE_STORAGE
-                                    || object.structureType == STRUCTURE_LINK
-                                );
-                            }
-                        });
-                        
-                        for(var i in targets){
-                            var energy = 0
-                            if(targets[i].store){
-                                energy = targets[i].store.energy;
-                            }else{
-                                energy = targets[i].energy;
-                            }
-                            var energyCapacity = targets[i].targets;
-                            if (energy < energyCapacity ){
-                                cp.memory.transferId = targets[i].id;
-                                break;
-                            }
-                        }
-                        
-                    }while(0);
+                    _transferEnergy(cp);
                 }
-                
                 var transfer = Game.getObjectById(cp.memory.transferId);
                 cp.moveTo(transfer);
-                cp.transferEnergy(transfer);
-                if(cp.memory.sourceId) cp.memory.sourceId = null;
+                var now = _getEnergy(transfer);
+                var cap = _getCapacity(transfer);
+                if ( now + cp.carry > cap){
+                    cp.transferEnergy(transfer, now + cp.carry - cap);
+                }else{
+                    cp.transferEnergy(transfer);
+                }
             }
             if(cp.ticksToLive <= 0){
-                cp.memory.role = null;
+                delete Memory.creeps[cp.name];
             }
         },
     },

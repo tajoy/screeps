@@ -15,6 +15,9 @@ module.exports = {
   isType:function(t,o){
     return gettype.call(o)=="[object "+t+"]";
   },
+  isString:function(o){
+    return gettype.call(o)=="[object String]";
+  },
   isObject:function(o){
     return gettype.call(o)=="[object Object]";
   },
