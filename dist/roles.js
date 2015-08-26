@@ -21,7 +21,7 @@ var _getEnergy = function(stct){
         return stct.store.energy;
     }
     return -1;
-}
+};
 
 var _getCapacity = function(stct){
     if(!stct || !stct.structureType) return;
@@ -34,13 +34,12 @@ var _getCapacity = function(stct){
         return stct.storeCapacity;
     }
     return -1;
-}
+};
 
 var _createCreep = function(_sp, body, _role, name){
-    if( !utility.isType("Spawn",stct)
+    if( !utility.isObject(_sp)
         || !utility.isArray(body)
         || !utility.isString(_role)
-        || !utility.isString(name)
     ) return;
     if(!arguments[1]) name = null;
     
@@ -55,7 +54,7 @@ var _createCreep = function(_sp, body, _role, name){
             );
     console.log("Spawn a "+_role+": " + cp);
     return cp;
-}
+};
 
 var _allocSource = function(cp){
     if(!cp || !cp.room || !cp.id) return;
@@ -68,7 +67,7 @@ var _allocSource = function(cp){
         return cp.memory.sourceId;
     }
     return null;
-}
+};
 
 var _allocEnergy = function(cp){
     if(!cp || !cp.room || !cp.pos) return;
@@ -129,7 +128,7 @@ var _allocEnergy = function(cp){
         }
 
     }
-}
+};
 
 
 
@@ -137,21 +136,19 @@ var _allocEnergy = function(cp){
 module.exports = {
     worker : {
         spawn : function(sp,name){
-            if( !utility.isType("Spawn",sp)
-                || !utility.isString(name)
-            )return;
+            if( !sp )return;
             if(!arguments[1]) name = null;
-            var body = [WORK, WORK, CARRY, MOVE]
-            var role = "worker"
+            var body = [WORK, CARRY, CARRY, MOVE, MOVE];
+            var role = "worker";
             var cp =_createCreep(sp, body, role, name);
             if(utility.isString(cp)){
                 _allocSource(Game.creeps[cp]);
             }
         },
         action : function(cp){
-            if(!utility.isType("Creep",cp)) return;
+            if(!utility.isObject(cp)) return;
             if(cp.carry.energy < cp.carryCapacity) {
-                cp.say("mining..");
+                //cp.say("mining..");
                 if(!cp.memory.sourceId){
                     _allocSource(cp);
                 }
@@ -160,7 +157,7 @@ module.exports = {
                 cp.harvest(source);
                 if(cp.memory.transferId) cp.memory.transferId = null;
             } else {
-                cp.say("returning ...");
+                //cp.say("returning ...");
                 if(!cp.memory.transferId || !Game.getObjectById(cp.memory.transferId)){
                     _allocEnergy(cp);
                 }
@@ -181,20 +178,18 @@ module.exports = {
             if(cp.ticksToLive <= 1){
                 delete Memory.creeps[cp.name];
             }
-        },
+        }
     },
     builder : {
         spawn : function(sp,name){
-            if( !utility.isType("Spawn",sp)
-                || !utility.isString(name)
-            )return;
+            if( !sp )return;
             if(!arguments[1]) name = null;
-            var body = [WORK, WORK, CARRY, MOVE]
-            var role = "builder"
+            var body = [WORK, CARRY, CARRY, MOVE, MOVE];
+            var role = "builder";
             _createCreep(sp, body, role, name);
         },
         action : function(cp){
-            if(!utility.isType("Creep",cp)) return;
+            if(!utility.isObject(cp)) return;
             if(!cp || !cp.room) return;
             if(cp.carry.energy == 0) {
                 if(Memory.status.creeps.count[cp.room]
@@ -202,42 +197,40 @@ module.exports = {
                     == Memory.config.creeps_limits[0][1])) return;
                 var sps = cp.room.find(FIND_MY_SPAWNS);
                 if( sps.length <=0 ) return;
-                cp.say("get energy ...");
+                //cp.say("get energy ...");
                 cp.moveTo(sps[0]);
                 sps[0].transferEnergy(cp);
             }
             else {
                 var targets = cp.room.find(FIND_CONSTRUCTION_SITES);
                 if(targets.length) {
-                    cp.say("Building ...");
+                    //cp.say("Building ...");
                     cp.moveTo(targets[0]);
                     cp.build(targets[0]);
                 }else{
                     //升级控制器
                     if(cp.room.controller) {
-                        cp.say("Upgrading controller ...");
+                        //cp.say("Upgrading controller ...");
                         cp.moveTo(cp.room.controller);
                         cp.upgradeController(cp.room.controller);
                     }
                 }
             }
-        },
+        }
     },
     guarder : {
         spawn : function(sp,name){
-            if( !utility.isType("Spawn",sp)
-                || !utility.isString(name)
-            )return;
+            if( !sp )return;
             if(!arguments[1]) name = null;
-            var body = [ATTACK, MOVE]
-            var role = "guarder"
+            var body = [ATTACK, ATTACK, MOVE, MOVE];
+            var role = "guarder";
             _createCreep(sp, body, role, name);
         },
         action : function(cp){
-            if(!utility.isType("Creep",cp)) return;
+            if(!utility.isObject(cp)) return;
             var targets = cp.room.find(FIND_HOSTILE_CREEPS);
             if(targets.length) {
-                cp.say("defending ...");
+                //cp.say("defending ...");
                 cp.moveTo(targets[0]);
                 cp.attack(targets[0]);
             }
