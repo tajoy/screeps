@@ -54,7 +54,7 @@ var _allocSource = function(cp){
     var sources = cp.room.find(FIND_SOURCES);
     var num = sources.length;
     if(num > 0){
-        var idx = parseInt("0x"+cp.id.substr(0, 2));
+        var idx = parseInt("0x"+cp.id.substr(cp.id.length - 3, 2));
         cp.memory.sourceId = sources[idx%num].id;
         return cp.memory.sourceId;
     }
@@ -139,7 +139,7 @@ module.exports = {
             var role = "worker"
             var cp =_createCreep(sp, body, role, name);
             if(utility.isString(cp)){
-                _allocSource(cp);
+                _allocSource(Game.creeps[cp]);
             }
         },
         action : function(cp){
@@ -182,9 +182,9 @@ module.exports = {
             _createCreep(sp, body, role, name);
         },
         action : function(cp){
-            if(Memory.status.creeps.count[cp.room]["worker"]
-                == Memory.config.creeps_limits[0][1]) return;
             if(cp.carry.energy == 0) {
+                if(Memory.status.creeps.count[cp.room]["worker"]
+                    == Memory.config.creeps_limits[0][1]) return;
                 var sps = rm.find(FIND_MY_SPAWNS);
                 if( sps.length <=0 ) return;
                 cp.say("get energy ...");
