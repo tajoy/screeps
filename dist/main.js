@@ -33,20 +33,12 @@ var roles = require('roles');
 /*************************/
 /*         主循环        */
 /*************************/
-for(var name in Game.creeps) {
+for (var name in Game.creeps) {
     var creep = Game.creeps[name];
-    
+
     //每个角色执行相应的动作
-    roles[creep.memory.role].action(creep);
-}
-
-
-/*************************/
-/*        清理内存       */
-/*************************/
-for(var creep in Memory.creeps) {
-    if(!Game.creeps[creep]) {
-        delete Memory.creeps[creep];
+    if (creep.memory.role && roles[creep.memory.role]) {
+        roles[creep.memory.role].action(creep);
     }
 }
 

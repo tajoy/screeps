@@ -11,6 +11,7 @@ var utility = require('utility');
 
 
 var _getEnergy = function(stct){
+    if(!stct || !stct.structureType) return;
     if (stct.structureType == STRUCTURE_EXTENSION
         || stct.structureType == STRUCTURE_SPAWN
         || stct.structureType == STRUCTURE_LINK) {
@@ -23,6 +24,7 @@ var _getEnergy = function(stct){
 }
 
 var _getCapacity = function(stct){
+    if(!stct || !stct.structureType) return;
     if (stct.structureType == STRUCTURE_EXTENSION
         || stct.structureType == STRUCTURE_SPAWN
         || stct.structureType == STRUCTURE_LINK) {
@@ -35,6 +37,11 @@ var _getCapacity = function(stct){
 }
 
 var _createCreep = function(_sp, body, _role, name){
+    if( !utility.isType("Spawn",stct)
+        || !utility.isArray(body)
+        || !utility.isString(_role)
+        || !utility.isString(name)
+    ) return;
     if(!arguments[1]) name = null;
     
     if(_sp.canCreateCreep(body) != OK){
@@ -51,6 +58,7 @@ var _createCreep = function(_sp, body, _role, name){
 }
 
 var _allocSource = function(cp){
+    if(!cp || !cp.room || !cp.id) return;
     var sources = cp.room.find(FIND_SOURCES);
     var num = sources.length;
     if(num > 0){
@@ -63,6 +71,7 @@ var _allocSource = function(cp){
 }
 
 var _allocEnergy = function(cp){
+    if(!cp || !cp.room || !cp.pos) return;
     var rm = cp.room;
     var pos = cp.pos;
 
@@ -128,6 +137,9 @@ var _allocEnergy = function(cp){
 module.exports = {
     worker : {
         spawn : function(sp,name){
+            if( !utility.isType("Spawn",sp)
+                || !utility.isString(name)
+            )return;
             if(!arguments[1]) name = null;
             var body = [WORK, WORK, CARRY, MOVE]
             var role = "worker"
@@ -137,6 +149,7 @@ module.exports = {
             }
         },
         action : function(cp){
+            if(!utility.isType("Creep",cp)) return;
             if(cp.carry.energy < cp.carryCapacity) {
                 cp.say("mining..");
                 if(!cp.memory.sourceId){
@@ -165,24 +178,29 @@ module.exports = {
                     cp.transferEnergy(transfer);
                 }
             }
-            if(cp.ticksToLive <= 0){
+            if(cp.ticksToLive <= 1){
                 delete Memory.creeps[cp.name];
             }
         },
     },
     builder : {
         spawn : function(sp,name){
+            if( !utility.isType("Spawn",sp)
+                || !utility.isString(name)
+            )return;
             if(!arguments[1]) name = null;
             var body = [WORK, WORK, CARRY, MOVE]
             var role = "builder"
             _createCreep(sp, body, role, name);
         },
         action : function(cp){
+            if(!utility.isType("Creep",cp)) return;
+            if(!cp || !cp.room) return;
             if(cp.carry.energy == 0) {
                 if(Memory.status.creeps.count[cp.room]
                     && (Memory.status.creeps.count[cp.room]["worker"]
                     == Memory.config.creeps_limits[0][1])) return;
-                var sps = rm.find(FIND_MY_SPAWNS);
+                var sps = cp.room.find(FIND_MY_SPAWNS);
                 if( sps.length <=0 ) return;
                 cp.say("get energy ...");
                 cp.moveTo(sps[0]);
@@ -207,12 +225,16 @@ module.exports = {
     },
     guarder : {
         spawn : function(sp,name){
+            if( !utility.isType("Spawn",sp)
+                || !utility.isString(name)
+            )return;
             if(!arguments[1]) name = null;
             var body = [ATTACK, MOVE]
             var role = "guarder"
             _createCreep(sp, body, role, name);
         },
         action : function(cp){
+            if(!utility.isType("Creep",cp)) return;
             var targets = cp.room.find(FIND_HOSTILE_CREEPS);
             if(targets.length) {
                 cp.say("defending ...");
