@@ -15,18 +15,19 @@ Memory.config.creeps_limits = [
 ];
 
 /*************************/
-/*        载入模块       */
-/*************************/
-var roles = require('roles');
-
-
-/*************************/
 /*        运行模块       */
 /*************************/
 //导入prototype方法
 require('prototypes')();
 //保持creep各角色的数量
 require('role_keep')();
+
+
+/*************************/
+/*        载入模块       */
+/*************************/
+var roles = require('roles');
+
 
 
 /*************************/
@@ -43,13 +44,12 @@ for(var name in Game.creeps) {
 /*************************/
 /*        清理内存       */
 /*************************/
-if ( Game.creeps.length > Memory.creeps.length ) {
-    for(var creep in Memory.creeps) {
-        if(!Game.creeps[creep]) {
-            delete Memory.creeps[creep];
-        }
+for(var creep in Memory.creeps) {
+    if(!Game.creeps[creep]) {
+        delete Memory.creeps[creep];
     }
 }
+
 
 console.log("====================== END TICK: "+Game.time+" ======================");
 console.log();

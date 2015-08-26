@@ -54,14 +54,15 @@ var _allocSource = function(cp){
     var sources = cp.room.find(FIND_SOURCES);
     var num = sources.length;
     if(num > 0){
-        var idx = parseInt("0x"+cp.id.substr(0, 2));
+        var idx = parseInt("0x"+cp.id.substr(cp.id.length - 3, 2));
+        console.log("_allocSource with idx:"+idx);
         cp.memory.sourceId = sources[idx%num].id;
         return cp.memory.sourceId;
     }
     return null;
 }
 
-var _transferEnergy = function(cp){
+var _allocEnergy = function(cp){
     var rm = cp.room;
     var pos = cp.pos;
 
@@ -80,8 +81,7 @@ var _transferEnergy = function(cp){
     }else{
         targets.push(sps);
     }
-    var path = [];
-
+    
     //计算所有路径
     for (var i in targets) {
         targets[i].path = cp.pos.findPathTo(targets[i]);
@@ -94,24 +94,20 @@ var _transferEnergy = function(cp){
     for (var i = 0; i < targets.length; i++) {
         var target = targets[i];
 
+        cp.memory.transferId = target.id;
+
         if (target.structureType == STRUCTURE_SPAWN
-            && target.energy <= target.storeCapacity) {
-            cp.memory.transferId = target.id;
-            cp.memory.transferPath = target.path;
+            && target.energy < target.storeCapacity) {
             return;
         }
 
         if (target.structureType == STRUCTURE_EXTENSION
-            && target.energy <= target.energyCapacity) {
-            cp.memory.transferId = target.id;
-            cp.memory.transferPath = target.path;
+            && target.energy < target.energyCapacity) {
             return;
         }
 
         if (target.structureType == STRUCTURE_STORAGE
-            && target.store.energy <= target.energyCapacity) {
-            cp.memory.transferId = target.id;
-            cp.memory.transferPath = target.path;
+            && target.store.energy < target.energyCapacity) {
             return;
         }
 
@@ -119,9 +115,7 @@ var _transferEnergy = function(cp){
         // until the next transfer is possible.
         if (target.structureType == STRUCTURE_LINK
             && target.cooldown <= 0 
-            && target.energy <= target.energyCapacity) {
-            cp.memory.transferId = target.id;
-            cp.memory.transferPath = target.path;
+            && target.energy < target.energyCapacity) {
             return;
         }
 
@@ -139,13 +133,11 @@ module.exports = {
             var role = "worker"
             var cp =_createCreep(sp, body, role, name);
             if(utility.isString(cp)){
-                _allocSource(cp);
+                _allocSource(Game.creeps[cp]);
             }
         },
         action : function(cp){
             if(cp.carry.energy < cp.carryCapacity) {
-                var sources = cp.room.find(FIND_SOURCES);
-                if(sources.length<=0)return;
                 cp.say("mining..");
                 if(!cp.memory.sourceId){
                     _allocSource(cp);
@@ -156,16 +148,20 @@ module.exports = {
                 if(cp.memory.transferId) cp.memory.transferId = null;
             } else {
                 cp.say("returning ...");
-                if(!cp.memory.transferId){
-                    _transferEnergy(cp);
+                if(!cp.memory.transferId || !Game.getObjectById(cp.memory.transferId)){
+                    _allocEnergy(cp);
                 }
                 var transfer = Game.getObjectById(cp.memory.transferId);
                 cp.moveTo(transfer);
                 var now = _getEnergy(transfer);
                 var cap = _getCapacity(transfer);
-                if ( now + cp.carry > cap){
-                    cp.transferEnergy(transfer, now + cp.carry - cap);
-                }else{
+                if ( now + cp.carry.energy > cap){
+                    if(now == cap){
+                        _allocEnergy(cp);
+                    } else {
+                        cp.transferEnergy(transfer, now + cp.carry - cap);
+                    }
+                } else {
                     cp.transferEnergy(transfer);
                 }
             }
@@ -183,8 +179,9 @@ module.exports = {
         },
         action : function(cp){
             if(cp.carry.energy == 0) {
-                if(Memory.status.creeps.count[cp.room]["worker"]
-                    == Memory.config.creeps_limits[0][1]) return;
+                if(Memory.status.creeps.count[cp.room]
+                    && (Memory.status.creeps.count[cp.room]["worker"]
+                    == Memory.config.creeps_limits[0][1])) return;
                 var sps = rm.find(FIND_MY_SPAWNS);
                 if( sps.length <=0 ) return;
                 cp.say("get energy ...");
