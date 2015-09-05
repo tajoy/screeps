@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/dist/common.js" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/dist/config_common.js" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/dist/config_limits.js" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/dist/config_spawn.js" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/dist/init_memory_and_config.js" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/dist/module_template.js" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/dist/prototypes.js" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/dist/role_builder.js" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/dist/role_gleaner.js" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/dist/role_guarder.js" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/dist/role_miner.js" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/dist/role_transporter.js" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/dist/role_worker.js" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/dist/utility.js" charset="UTF-8" />
+    <file url="PROJECT" charset="UTF-8" />
+  </component>
+</project>
