@@ -15,7 +15,7 @@ module.exports = function () {
     Memory.config.isDebug = false;
 
     //RCL(房间控制器)降级时间警告时间下限
-    Memory.config.warning_ticks_downgrade_low = 1000;
+    Memory.config.warning_ticks_downgrade_low = 10000;
 
     //当前可用角色(role)
     Memory.config.roles = [
@@ -36,7 +36,7 @@ module.exports = function () {
     Memory.config.builder_priority = [
         "BUILD",//修建建筑物
         //"FIX",//修复建筑物
-        "UPRCL",//升级RCL(房间控制器)
+        //"UPRCL",//升级RCL(房间控制器)
         //"UPDEF",//升级防御工事
     ];
 

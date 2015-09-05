@@ -119,6 +119,10 @@ module.exports = {
                 cp.memory.state = "look";
                 cp.memory.transferId = null;
             } else {
+                if (!transfer || transfer == null || !cp.memory.transferId) {
+                    cp.memory.state = "look";
+                    cp.memory.transferId = null;
+                }
                 if (!cp.pos.isNearTo(transfer.pos)) {
                     cp.moveTo(transfer);
                 } else {
@@ -126,6 +130,10 @@ module.exports = {
                 }
             }
         } else {
+            if (!transfer || transfer == null || !cp.memory.transferId) {
+                cp.memory.state = "look";
+                cp.memory.transferId = null;
+            }
             if (!cp.pos.isNearTo(transfer.pos)) {
                 cp.moveTo(transfer);
             } else {
