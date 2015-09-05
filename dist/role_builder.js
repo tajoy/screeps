@@ -40,7 +40,7 @@ module.exports = {
         if (rcl.ticksToDowngrade < Memory.config.warning_ticks_downgrade_low) {
             ["UPRCL",].concat(priority);
         }
-        for (var i in priority) {
+        for (var i = 0; i < priority.length; i++) {
             switch (priority[i]) {
                 case "BUILD"://修建建筑物
                     var sites = cp.room.find(FIND_CONSTRUCTION_SITES);
