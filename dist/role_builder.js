@@ -49,11 +49,9 @@ module.exports = {
                         if (site) {
                             cp.memory.state = "build_sites";
                             cp.memory.siteId = site.id;
+                            return;
                         }
                     }
-                    break;
-                case "FIX"://修复建筑物
-                    cp.memory.state = "fix_building";
                     break;
                 case "UPRCL"://升级RCL(房间控制器)
                     if (Memory.config.is_up_controller_by_room
@@ -64,11 +62,15 @@ module.exports = {
                         )
                     ) {
                         cp.memory.state = "up_controller";
+                            return;
                     }
                     break;
+                case "FIX"://修复建筑物
+                    cp.memory.state = "fix_building";
+                    return;
                 case "UPDEF"://升级防御工事
                     cp.memory.state = "up_defense";
-                    break;
+                    return;
             }
         }
 
